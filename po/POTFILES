@@ -1,0 +1,6 @@
+data/com.example.catgallery.desktop.in
+data/com.example.catgallery.appdata.xml.in
+data/com.example.catgallery.gschema.xml
+src/main.py
+src/window.py
+src/window.ui

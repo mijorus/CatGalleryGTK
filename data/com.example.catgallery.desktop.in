@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=catgallery
+Exec=catgallery
+Icon=com.example.catgallery
+Terminal=false
+Type=Application
+Categories=GTK;
+StartupNotify=true
