@@ -1,0 +1,2 @@
+requests
+dbus-python == 1.2.18

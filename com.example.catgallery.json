@@ -25,6 +25,21 @@
     "modules" : [
         "python3-requirements.json",
         {
+            "name": "libportal",
+            "buildsystem": "meson",
+            "config-opts": [
+                "-Dbackends=gtk4",
+                "-Ddocs=false"
+            ],
+            "sources": [
+                {
+                    "type": "git",
+                    "url": "https://github.com/flatpak/libportal",
+                    "tag": "0.6"
+                }
+            ]
+        },
+        {
             "name" : "catgallery",
             "builddir" : true,
             "buildsystem" : "meson",

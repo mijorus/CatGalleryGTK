@@ -20,12 +20,15 @@
 from time import sleep
 import threading
 import requests
+import os
+import shutil
 import gi
+# import Xdp
 
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 
-from gi.repository import Adw, Gtk, GdkPixbuf, GLib  # noqa
+from gi.repository import Adw, Gtk, GdkPixbuf, GLib, Xdp  # noqa
 
 
 class CatgalleryWindow(Adw.ApplicationWindow):
@@ -33,7 +36,7 @@ class CatgalleryWindow(Adw.ApplicationWindow):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.set_default_size(800,800)
+        self.set_default_size(800, 800)
 
         self.header = Adw.HeaderBar(hexpand=True)
         self.header.set_title_widget(Adw.WindowTitle.new('Cat Gallery', ''))
@@ -53,7 +56,7 @@ class CatgalleryWindow(Adw.ApplicationWindow):
 
         button_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10, halign=Gtk.Align.CENTER)
 
-        self.next_button = Gtk.Button(label='Next')
+        self.next_button = Gtk.Button.new_from_icon_name('right-large-symbolic')
         self.next_button.connect('clicked', self.on_next_button_clicked)
 
         self.prev_button = Gtk.Button(label='Back')
@@ -65,6 +68,8 @@ class CatgalleryWindow(Adw.ApplicationWindow):
         set_wallpaper_button_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, halign=Gtk.Align.CENTER)
 
         self.set_wallpaper_button = Gtk.Button(css_classes=['suggested-action'])
+        self.set_wallpaper_button.connect('clicked', self.on_set_wallpaper_button_clicked)
+
         self.set_wallpaper_button_spinner = Gtk.Spinner(spinning=True, visible=False)
         self.set_wallpaper_button_label = Gtk.Label(label='Set as wallpaper')
         set_wallpaper_button_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
@@ -88,6 +93,20 @@ class CatgalleryWindow(Adw.ApplicationWindow):
         scrolled_window = Gtk.ScrolledWindow()
         scrolled_window.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
         scrolled_window.set_child(grid)
+
+        self.tmp_dir_history = GLib.get_user_cache_dir() + '/history'
+        print(self.tmp_dir_history)
+        
+        for m in dir(Xdp.PortalClass):
+            print(dir(Xdp))
+
+        if os.path.exists(self.tmp_dir_history):
+            shutil.rmtree(self.tmp_dir_history)
+
+        os.mkdir(self.tmp_dir_history)
+        self.curr_history = 0
+        self.max_history = self.curr_history
+
         self.set_content(scrolled_window)
 
     def on_next_button_clicked(self, widget):
@@ -97,27 +116,58 @@ class CatgalleryWindow(Adw.ApplicationWindow):
         threading.Thread(target=self.load_next_image).start()
 
     def on_prev_button_clicked(self, widget):
-        pass
+        if self.curr_history == 1:
+            return
+
+        self.curr_history -= 1
+        self.preview_image.set_from_file(f'{self.tmp_dir_history}/{self.curr_history}')
 
     def load_next_image(self):
-        sleep(3)
+        if (self.curr_history + 1) < self.max_history:
+            self.curr_history += 1
+            self.preview_image.set_from_file(f'{self.tmp_dir_history}/{self.curr_history}')
+            self.on_image_load_end()
+        else:
+            response = requests.get('https://cataas.com/cat', timeout=10)
+            response.raise_for_status()
 
-        response = requests.get('https://cataas.com/cat', timeout=10)
-        response.raise_for_status()
-
-        loader = GdkPixbuf.PixbufLoader()
-        loader.write_bytes(GLib.Bytes.new(response.content))
-        loader.close()
-
-        # self.preview_image.set_from_pixbuf(loader.get_pixbuf())
-        GLib.idle_add(self.on_image_load_end, (loader.get_pixbuf()))
+            GLib.idle_add(self.on_image_load_end, (response))
 
     def on_image_load_start(self):
         self.set_wallpaper_button_spinner.set_visible(True)
         self.set_wallpaper_button_spinner.set_spinning(True)
         self.set_wallpaper_button_label.set_visible(False)
 
-    def on_image_load_end(self, pixbuf):
+    def on_image_load_end(self, response=None):
+        if response:
+            loader = GdkPixbuf.PixbufLoader()
+            loader.write_bytes(GLib.Bytes.new(response.content))
+            loader.close()
+
+            pixbuf = loader.get_pixbuf()
+            self.preview_image.set_from_pixbuf(pixbuf)
+
+            self.curr_history += 1
+            with open(f'{self.tmp_dir_history}/{self.curr_history}', 'wb+') as file:
+                file.write(response.content)
+
+            self.max_history = self.curr_history
+
         self.set_wallpaper_button_spinner.set_visible(False)
         self.set_wallpaper_button_label.set_visible(True)
-        self.preview_image.set_from_pixbuf(pixbuf)
+
+    def on_set_wallpaper_button_clicked(self, widget):
+        if not self.curr_history or self.set_wallpaper_button_spinner.get_visible():
+            return
+
+        print('qui')
+        portal = Xdp.Portal()
+        # parent = Xdp.Parent()
+        # parent = Xdp.parent_new_gtk(self)
+        portal.set_wallpaper(
+            Xdp.Parent.new(),
+            f'file://{self.tmp_dir_history}/{self.curr_history}', 
+            Xdp.WallpaperFlags.BACKGROUND, 
+            None, 
+            lambda _: print('DONE')
+        )
