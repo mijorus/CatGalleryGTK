@@ -4,3 +4,4 @@ buiddir
 _build
 .flatpak/flatpak-builder
 .flatpak-builder
+install.sh

@@ -23,7 +23,7 @@ import requests
 import os
 import shutil
 import gi
-# import Xdp
+import dbus
 
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
@@ -96,9 +96,6 @@ class CatgalleryWindow(Adw.ApplicationWindow):
 
         self.tmp_dir_history = GLib.get_user_cache_dir() + '/history'
         print(self.tmp_dir_history)
-        
-        for m in dir(Xdp.PortalClass):
-            print(dir(Xdp))
 
         if os.path.exists(self.tmp_dir_history):
             shutil.rmtree(self.tmp_dir_history)
@@ -160,14 +157,13 @@ class CatgalleryWindow(Adw.ApplicationWindow):
         if not self.curr_history or self.set_wallpaper_button_spinner.get_visible():
             return
 
-        print('qui')
-        portal = Xdp.Portal()
-        # parent = Xdp.Parent()
-        # parent = Xdp.parent_new_gtk(self)
-        portal.set_wallpaper(
-            Xdp.Parent.new(),
-            f'file://{self.tmp_dir_history}/{self.curr_history}', 
-            Xdp.WallpaperFlags.BACKGROUND, 
-            None, 
-            lambda _: print('DONE')
-        )
+        bus = dbus.SessionBus()
+        obj = bus.get_object("org.freedesktop.portal.Desktop", "/org/freedesktop/portal/desktop")
+        inter = dbus.Interface(obj, "org.freedesktop.portal.Wallpaper")
+        res = inter.SetWallpaperURI('', f'file://{self.tmp_dir_history}/{self.curr_history}', {
+            'set-on': 'background',
+            'show-preview': False
+        })
+        
+        print(f'{self.tmp_dir_history}/{self.curr_history}')
+        print('DONE')
