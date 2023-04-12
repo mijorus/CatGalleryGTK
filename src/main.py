@@ -18,6 +18,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from .window import CatgalleryWindow
+from .preferences import Preferences
 from gi.repository import Gtk, Gio, Adw
 import sys
 import gi
@@ -62,6 +63,8 @@ class CatgalleryApplication(Adw.Application):
     def on_preferences_action(self, widget, _):
         """Callback for the app.preferences action."""
         print('app.preferences action activated')
+        p = Preferences()
+        p.present()
 
     def create_action(self, name, callback, shortcuts=None):
         """Add an application action.

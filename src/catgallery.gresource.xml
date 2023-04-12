@@ -3,6 +3,7 @@
   <gresource prefix="/com/example/catgallery">
     <file preprocess="xml-stripblanks">window.ui</file>
     <file preprocess="xml-stripblanks">gtk/help-overlay.ui</file>
+    <file preprocess="xml-stripblanks">gtk/main-menu.ui</file>
     <file>assets/placeholder.png</file>
   </gresource>
 </gresources>

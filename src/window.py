@@ -27,6 +27,7 @@ import dbus
 
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
+gi.require_version('Xdp', '1.0')
 
 from gi.repository import Adw, Gtk, GdkPixbuf, GLib, Xdp  # noqa
 
@@ -40,6 +41,16 @@ class CatgalleryWindow(Adw.ApplicationWindow):
 
         self.header = Adw.HeaderBar(hexpand=True)
         self.header.set_title_widget(Adw.WindowTitle.new('Cat Gallery', ''))
+
+        builder = Gtk.Builder()
+        builder.add_from_resource('/com/example/catgallery/gtk/main-menu.ui')
+
+        menu = Gtk.MenuButton(
+            menu_model=builder.get_object('primary_menu'),
+            icon_name='open-menu-symbolic'
+        )
+
+        self.header.pack_end(menu)
 
         self.set_title('Cat Gallery')
         self.set_decorated(True)
