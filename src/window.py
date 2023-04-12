@@ -29,7 +29,7 @@ gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 gi.require_version('Xdp', '1.0')
 
-from gi.repository import Adw, Gtk, GdkPixbuf, GLib, Xdp  # noqa
+from gi.repository import Adw, Gtk, GdkPixbuf, GLib, Xdp, Gio  # noqa
 
 
 class CatgalleryWindow(Adw.ApplicationWindow):
@@ -96,7 +96,9 @@ class CatgalleryWindow(Adw.ApplicationWindow):
 
         counter_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, halign=Gtk.Align.CENTER)
         counter = Gtk.Button(label='0')
-        counter.connect('clicked', lambda w: counter.set_label(str(int(counter.get_label()) + 1)))
+        
+        # This will freeze the application for a short time! 
+        counter.connect('clicked', self.counter_example)
         counter_row.append(counter)
 
         grid.attach(counter_row, 0, 4, 1, 1)
@@ -117,6 +119,10 @@ class CatgalleryWindow(Adw.ApplicationWindow):
 
         self.set_content(scrolled_window)
 
+    def counter_example(self, widget):
+        sleep(3)
+        widget.set_label(str(int(widget.get_label()) + 1))
+
     def on_next_button_clicked(self, widget):
         self.on_image_load_start()
 
@@ -136,7 +142,10 @@ class CatgalleryWindow(Adw.ApplicationWindow):
             self.preview_image.set_from_file(f'{self.tmp_dir_history}/{self.curr_history}')
             self.on_image_load_end()
         else:
-            response = requests.get('https://cataas.com/cat', timeout=10)
+            settings = Gio.Settings.new("com.example.catgallery")
+            url = 'https://cataas.com/cat' if settings.get_boolean('show-cats') else 'https://picsum.photos/200'
+
+            response = requests.get(url, timeout=10)
             response.raise_for_status()
 
             GLib.idle_add(self.on_image_load_end, (response))

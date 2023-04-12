@@ -54,7 +54,6 @@ class CatgalleryApplication(Adw.Application):
                                 application_icon='com.example.catgallery',
                                 developer_name='Lorenzo',
                                 version='0.1.0',
-                                comments=_('A simple cat gallery'),
                                 developers=['Lorenzo'],
                                 copyright='© 2023 Lorenzo'
                                 )
